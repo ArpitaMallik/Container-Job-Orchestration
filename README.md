@@ -7,7 +7,7 @@ This project allows users to submit Docker-based jobs from a web UI. The backend
 ## UI
 
 ```md
-![UI Screenshot](UI.png)
+![UI Screenshot](./screenshots/UI.png)
 ```
 
 ## What This App Does
