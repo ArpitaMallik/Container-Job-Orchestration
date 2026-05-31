@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Job Orchestrator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f5f7fb;
+            --bg-soft: #eef4ff;
+            --card: #ffffff;
+            --card-border: #e4e9f2;
+            --text: #172033;
+            --muted: #697386;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-soft: #dbeafe;
+            --success: #16a34a;
+            --success-soft: #dcfce7;
+            --danger: #dc2626;
+            --danger-soft: #fee2e2;
+            --warning: #d97706;
+            --warning-soft: #fef3c7;
+            --running: #0284c7;
+            --running-soft: #e0f2fe;
+            --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+            --shadow-sm: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        body {
+            font-family: Inter, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 34%),
+                radial-gradient(circle at top right, rgba(20, 184, 166, 0.10), transparent 30%),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px 20px;
+        }
+
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 28px;
+            padding: 34px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 190px;
+            height: 190px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.12);
+            right: -55px;
+            top: -70px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            padding: 8px 13px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-size: clamp(32px, 5vw, 52px);
+            line-height: 1.02;
+            letter-spacing: -1.5px;
+            margin-bottom: 12px;
+            color: var(--text);
+            max-width: 760px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 720px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-sm);
+            border-radius: 24px;
+            padding: 24px;
+        }
+
+        .form-section {
+            position: sticky;
+            top: 24px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+            font-size: 21px;
+            margin-bottom: 18px;
+            letter-spacing: -0.4px;
+        }
+
+        .section-title span {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #334155;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 13px 14px;
+            background: #ffffff;
+            border: 1px solid #d7deea;
+            border-radius: 14px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+
+        textarea {
+            min-height: 105px;
+            resize: vertical;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+            line-height: 1.5;
+        }
+
+        button {
+            border: none;
+            border-radius: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), #14b8a6);
+            color: white;
+            padding: 14px 22px;
+            font-size: 16px;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #0f766e);
+        }
+
+        .helper-card {
+            margin-top: 18px;
+            padding: 15px;
+            border-radius: 18px;
+            background: #f8fbff;
+            border: 1px dashed #cbd5e1;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .helper-card code {
+            color: var(--primary-dark);
+            background: var(--primary-soft);
+            padding: 2px 6px;
+            border-radius: 7px;
+            font-weight: 700;
+        }
+
+        .jobs-section {
+            margin-bottom: 24px;
+        }
+
+        .job-item {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            padding: 16px;
+            border-radius: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border 0.18s ease;
+        }
+
+        .job-item:hover {
+            transform: translateY(-2px);
+            border-color: #bfdbfe;
+            box-shadow: 0 14px 28px rgba(37, 99, 235, 0.10);
+        }
+
+        .job-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .job-name {
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 7px;
+            font-size: 15px;
+        }
+
+        .job-details {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .job-status {
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: var(--warning-soft);
+            color: var(--warning);
+        }
+
+        .status-running {
+            background: var(--running-soft);
+            color: var(--running);
+        }
+
+        .status-completed {
+            background: var(--success-soft);
+            color: var(--success);
+        }
+
+        .status-failed {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .logs-section {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-sm);
+            display: none;
+        }
+
+        .logs-section.active {
+            display: block;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .close-btn {
+            background: var(--danger-soft);
+            color: var(--danger);
+            padding: 9px 14px;
+            font-size: 14px;
+        }
+
+        .close-btn:hover {
+            background: #fecaca;
+        }
+
+        #log-output {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            padding: 18px;
+            border-radius: 18px;
+            height: 410px;
+            overflow-y: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+            font-size: 13px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            color: #86efac;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 42px 22px;
+            color: var(--muted);
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 18px;
+        }
+
+        .empty-state::before {
+            content: "📭";
+            display: block;
+            font-size: 34px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 18px 14px;
+            }
+
+            .hero {
+                padding: 26px;
+                border-radius: 22px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                position: static;
+            }
+
+            .job-item {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .job-status {
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <div class="eyebrow">⚡ Real-time Docker job execution</div>
+            <h1>🐳 Container Job Orchestrator</h1>
+            <p class="subtitle">
+                Submit Docker commands, queue them through Redis, run them in a background worker,
+                and watch live execution logs stream directly to your browser.
+            </p>
+        </header>
+
+        <main class="grid">
+            <section class="panel form-section">
+                <h2 class="section-title"><span>🚀</span>Submit New Job</h2>
+                <form id="job-form">
+                    <div class="form-group">
+                        <label for="job-name">Job Name</label>
+                        <input type="text" id="job-name" placeholder="My Docker Job" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="job-command">Docker Command</label>
+                        <textarea id="job-command" placeholder="docker run hello-world" required></textarea>
+                    </div>
+                    <button class="submit-btn" type="submit">Submit Job</button>
+                </form>
+
+                <div class="helper-card">
+                    Try a simple command first: <code>docker run hello-world</code>
+                </div>
+            </section>
+
+            <section>
+                <div class="panel jobs-section">
+                    <h2 class="section-title"><span>📋</span>Jobs</h2>
+                    <div id="jobs-list">
+                        <div class="empty-state">No jobs yet. Submit one above!</div>
+                    </div>
+                </div>
+
+                <div class="logs-section" id="logs-section">
+                    <div class="logs-header">
+                        <h2 class="section-title" id="logs-title"><span>🖥️</span>Live Logs</h2>
+                        <button class="close-btn" onclick="closeLogs()">✕ Close</button>
+                    </div>
+                    <div id="log-output">Connecting...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // State
+        let currentJobId = null;
+        let websocket = null;
+        let logsInterval = null;
+
+        // API Base URL
+        const API = '';
+
+        // ─────────────────────────────────────────
+        // Submit Job Form
+        // ─────────────────────────────────────────
+
+        document.getElementById('job-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('job-name').value;
+            const command = document.getElementById('job-command').value;
+
+            try {
+                const response = await fetch(`${API}/jobs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, command })
+                });
+
+                if (response.ok) {
+                    const job = await response.json();
+
+                    // Clear form
+                    document.getElementById('job-name').value = '';
+                    document.getElementById('job-command').value = '';
+
+                    // Auto-open logs for the new job
+                    viewLogs(job.id);
+
+                    // Refresh jobs list
+                    loadJobs();
+                } else {
+                    alert('Failed to submit job');
+                }
+            } catch (error) {
+                alert('Error submitting job: ' + error.message);
+            }
+        });
+
+        // ─────────────────────────────────────────
+        // Load Jobs List
+        // ─────────────────────────────────────────
+
+        async function loadJobs() {
+            try {
+                const response = await fetch(`${API}/jobs`);
+                const data = await response.json();
+
+                const jobsList = document.getElementById('jobs-list');
+
+                if (data.jobs.length === 0) {
+                    jobsList.innerHTML = '<div class="empty-state">No jobs yet. Submit one above!</div>';
+                    return;
+                }
+
+                jobsList.innerHTML = data.jobs.map(job => `
+                    <div class="job-item" onclick="viewLogs(${job.id})">
+                        <div class="job-info">
+                            <div class="job-name">${escapeHtml(job.name)}</div>
+                            <div class="job-details">
+                                ID: ${job.id} | 
+                                Command: ${escapeHtml(job.command)} |
+                                Created: ${new Date(job.created_at).toLocaleString()}
+                            </div>
+                        </div>
+                        <span class="job-status status-${job.status}">${job.status}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        // ─────────────────────────────────────────
+        // View Logs (WebSocket)
+        // ─────────────────────────────────────────
+
+        async function viewLogs(jobId) {
+            currentJobId = jobId;
+
+            // Show logs section
+            const logsSection = document.getElementById('logs-section');
+            const logsTitle = document.getElementById('logs-title');
+            const logOutput = document.getElementById('log-output');
+
+            logsSection.classList.add('active');
+            logsTitle.innerHTML = `<span>🖥️</span>Live Logs - Job #${jobId}`;
+            logOutput.textContent = 'Connecting to log stream...\n';
+
+            // Close existing WebSocket
+            if (websocket) {
+                websocket.close();
+            }
+
+            // Connect to WebSocket
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/${jobId}`;
+
+            websocket = new WebSocket(wsUrl);
+
+            websocket.onopen = () => {
+                logOutput.textContent += '\n[✓] WebSocket connected\n';
+            };
+
+            websocket.onmessage = (event) => {
+                if (event.data.trim()) {  // Skip empty heartbeat messages
+                    logOutput.textContent += event.data;
+                    logOutput.scrollTop = logOutput.scrollHeight;
+                }
+            };
+
+            websocket.onclose = () => {
+                logOutput.textContent += '\n[Disconnected]';
+            };
+
+            websocket.onerror = (error) => {
+                logOutput.textContent += '\n[WebSocket Error]';
+            };
+
+            // Poll for job updates (status changes)
+            loadJobs();
+        }
+
+        // ─────────────────────────────────────────
+        // Close Logs
+        // ─────────────────────────────────────────
+
+        function closeLogs() {
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+            document.getElementById('logs-section').classList.remove('active');
+            currentJobId = null;
+        }
+
+        // ─────────────────────────────────────────
+        // Helper Functions
+        // ─────────────────────────────────────────
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ─────────────────────────────────────────
+        // Initialize
+        // ─────────────────────────────────────────
+
+        // Load jobs on page load
+        loadJobs();
+
+        // Refresh jobs every 3 seconds
+        setInterval(loadJobs, 3000);
+    </script>
+</body>
+</html>

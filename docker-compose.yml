@@ -1,0 +1,80 @@
+# Development Configuration
+# - Uses Dockerfile.dev with --reload enabled
+# - Mounts source code as volumes for live editing
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: orchestrator_db
+    environment:
+      POSTGRES_USER: orchestrator
+      POSTGRES_PASSWORD: orchestrator_secret
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchestrator"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Redis Queue
+  redis:
+    image: redis:7-alpine
+    container_name: orchestrator_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Application (Development)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: orchestrator_app
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://orchestrator:orchestrator_secret@postgres:5432/orchestrator_db
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./frontend:/app/frontend
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # Worker Process (Development)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: orchestrator_worker
+    command: python -m src.worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://orchestrator:orchestrator_secret@postgres:5432/orchestrator_db
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true
+
+volumes:
+  postgres_data:
