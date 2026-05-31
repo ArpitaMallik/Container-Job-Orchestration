@@ -579,49 +579,6 @@ docker run python:3.11-slim python -c "print('Hello from Python container')"
 docker run alpine echo "Hello from Alpine"
 ```
 
-## Development Notes
-
-This project uses `--reload` for development.
-
-That means when code changes, FastAPI can restart automatically.
-
-This is useful while building the project, but production should run without `--reload`.
-
-For production, a better setup would be:
-
-* Disable `--reload`
-* Do not mount source code as a volume
-* Use Gunicorn with Uvicorn workers
-* Add authentication
-* Add stronger command validation
-* Add resource limits
-* Add better logging and monitoring
-
-## Important Security Note
-
-This project runs Docker commands submitted by users.
-
-That can be dangerous if used in a real public environment.
-
-For learning and internship demonstration, this is fine if you control the commands being tested.
-
-For a real production system, you should add:
-
-* Authentication
-* Command allowlist
-* Container CPU limits
-* Container memory limits
-* Timeout for long-running jobs
-* Network restrictions
-* Cleanup of containers and images
-* Protection against dangerous Docker commands
-* Proper user permission handling
-
-Example safer Docker run options:
-
-```bash
-docker run --rm --memory=128m --cpus=0.5 --network=none alpine echo "safe test"
-```
 
 ## What I Learned From This Project
 
@@ -636,23 +593,6 @@ This project helped me understand:
 * How job status is stored and updated in a database
 * How multiple services can run together using Docker Compose
 
-## Future Improvements
-
-Possible improvements:
-
-* Add user authentication
-* Add job cancellation
-* Add container resource limits
-* Add job timeout handling
-* Save logs permanently in the database or files
-* Add pagination for job history
-* Add search and filter options
-* Add Prometheus metrics
-* Add Grafana dashboard
-* Add better error handling
-* Add role-based access
-* Add production Docker Compose file
-* Add CI/CD pipeline
 
 ## Final Summary
 
