@@ -5,10 +5,7 @@ A real-time container job execution platform built with FastAPI, Redis, PostgreS
 This project allows users to submit Docker-based jobs from a web UI. The backend stores the job, places it in a Redis queue, and a separate worker process picks it up and runs it. While the job is running, logs are streamed live back to the browser using WebSockets.
 
 ## UI
-
-```md
 ![UI Screenshot](screenshots/UI.png)
-```
 
 ## What This App Does
 
